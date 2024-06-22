@@ -109,14 +109,40 @@ class Pokemon {
     //  Anunciar el daño hecho: "And it hit [oponente] with [daño] damage"
     // si no "pega"
     //  anunciar "But it MISSED!"
+
+    console.log(`${this.name} used ${this.currentMove.name}!`);
+
+    if (this.moveHits()) {
+      let damage = this.calculateBaseDamage(target);
+      const isCritical = this.isCritical();
+      if (isCritical) {
+        console.log("A critical hit!");
+        damage *= 2;
+      }
+
+      const effectiveness = this.calculateEffectiveness(target);
+      if (effectiveness > 1) {
+        console.log("It's super effective!");
+      } else if (effectiveness < 1) {
+        console.log("It's not very effective...");
+      }
+
+      damage = Math.floor(damage * effectiveness);
+      target.receiveDamage(damage);
+      console.log(`And it hit ${target.name} with ${damage} damage!`);
+    } else {
+      console.log("But it MISSED!");
+    }
   }
 
   moveHits() {
     // calcular si pega en base al accuracy del currentMove
+    return Math.random() < (this.currentMove.accuracy / 100);
   }
 
   isCritical() {
     // 1/16 de probabilidad que sea critico
+    return Math.random() < (1 / 16);
   }
 
   calculateBaseDamage(target) {
@@ -124,7 +150,7 @@ class Pokemon {
     // determinar si se usara el stat attack o specialAttack del atacante
     // determinar si se usara el stat defense o specialDefense del defensor
     // retornar el rsultado de la formula de daño
-    const isSpecial = specialMoveTypes.includes(this.currentMove.type);
+    const isSpecial = SpecialMoveTypes.includes(this.currentMove.type);
     const attackStat = isSpecial ? this.stats.specialAttack : this.stats.attack;
     const defenseStat = isSpecial ? target.stats.specialDefense : target.stats.defense;
 
@@ -133,15 +159,37 @@ class Pokemon {
 
   calculateEffectiveness(target) {
     // caluclar el multiplicador de efectividad tomando el tipo del currentMove y el tipo de pokemon del oponente
-    return
+    return target.type.reduce((effectiveness, type) => 
+      effectiveness * TypeChart[this.currentMove.type][type], 1);
   }
 
+
   processVictory(target) {
-    // calcular la experiencia ganada e incrementarla a tus experiencePoints
+      // calcular la experiencia ganada e incrementarla a tus experiencePoints
     // incrementar los effortValues en la estadística correspondiente con la información de effortPoints del oponente
     // anunciar "[nombre] gained [cantidad] experience points"
     // verificar si los nuevos experiencePoints te llevan a subir de nivel
     // si se sube de nivel
     // incrementar nivel y Anunciar "[nombre] reached level [nivel]!"
+    
+    const expGained = Math.floor(target.baseExperienceYield * target.level / 7);
+    this.experiencePoints += expGained;
+    console.log(`${this.name} gained ${expGained} experience points!`);
+  
+    const statToIncrease = target.effortPointYield.type;
+    const evIncrease = target.effortPointYield.amount;
+    this.effortValues[statToIncrease] = Math.min(255, this.effortValues[statToIncrease] + evIncrease);
+  
+    const oldLevel = this.level;
+    while (this.experiencePoints >= this.expForLevel(this.level + 1)) {
+      this.level++;
+    }
+  
+    if (this.level > oldLevel) {
+      console.log(`${this.name} reached level ${this.level}!`);
+    }
   }
 }
+
+
+
