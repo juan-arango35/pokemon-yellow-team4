@@ -1,5 +1,5 @@
 class Pokemon {
-  constructor(species, name, level) {
+  constructor(species, name, level=1) {
     // 1)Inicializar atributos usando los parámetros
     this.species = species;
     this.name = name;
